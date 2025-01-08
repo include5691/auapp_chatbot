@@ -1,0 +1,7 @@
+colorama
+python-dotenv
+aiogram
+fastapi
+uvicorn
+python-multipart
+redis
