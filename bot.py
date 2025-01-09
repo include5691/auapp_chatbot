@@ -84,7 +84,7 @@ async def process_distributed_lead(request: Request):
     logging.info(f"{Fore.LIGHTGREEN_EX}Sent dist text to {lead_id}{Style.RESET_ALL}")
 
 async def main():
-    config = uvicorn.Config(app, host="0.0.0.0", port=8500, log_level="info", loop="asyncio")
+    config = uvicorn.Config(app, host="0.0.0.0", port=8500, log_level="warning", loop="asyncio")
     server = uvicorn.Server(config)
     server_task = asyncio.create_task(server.serve())
     bot_task = asyncio.create_task(dp.start_polling(bot))
