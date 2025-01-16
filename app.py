@@ -7,7 +7,7 @@ import asyncio
 import uvicorn
 from aiogram import Dispatcher
 from _bot import bot
-from leads import fastapi_app
+from bot import fastapi_app
 from bot import router
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')

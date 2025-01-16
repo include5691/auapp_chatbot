@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1
 
 COPY /au_b24 /app/au_b24
 COPY /e5lib /app/e5lib
+COPY /e5nlp /app/e5nlp
 COPY /aulib /app/aulib
 
 COPY auapp_chatbot/bot /app/bot
@@ -13,6 +14,7 @@ COPY /auapp_chatbot/app.py /auapp_chatbot/leads.py /auapp_chatbot/_bot.py /auapp
 
 RUN pip install ./au_b24
 RUN pip install ./e5lib
+RUN pip install ./e5nlp
 RUN pip install ./aulib
 RUN pip install -r requirements.txt
 

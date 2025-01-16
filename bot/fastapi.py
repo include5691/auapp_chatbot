@@ -2,14 +2,14 @@ import logging
 import os
 import logging
 from urllib.parse import quote
-from fastapi import FastAPI, Request
+from bot.fastapi import FastAPI, Request
 from colorama import Fore, Style
 from aiogram.exceptions import TelegramForbiddenError
 from au_b24 import get_lead, get_user
 from e5lib.funcs import phone_purge
 from aulib.au_engine import get_engines
-from _redis import redis_cli
 from _bot import bot
+from ._storage import get_chat_id
 
 fastapi_app = FastAPI()
 
@@ -22,7 +22,7 @@ async def process_distributed_lead(request: Request):
     if not value or not isinstance(value, str):
         return
     lead_id = value.split("_")[1]
-    chat_id = redis_cli.get(lead_id)
+    chat_id = get_chat_id(lead_id)
     if not chat_id:
         return
     lead = get_lead(lead_id)

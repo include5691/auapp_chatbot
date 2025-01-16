@@ -6,7 +6,8 @@ from aiogram.types import Message
 from au_b24 import get_leads, update_lead
 from e5lib.funcs import phone_purge, create_phone_vars
 from e5lib.time import get_yesterday
-from _redis import redis_cli
+from ..types import Lead
+from .._storage import set_lead
 
 async def identify_user(message: Message) -> None:
     "User identification with phone"
@@ -23,7 +24,7 @@ async def identify_user(message: Message) -> None:
         return
     lead = None
     for phone in phone_vars:
-        leads = get_leads(filters={"PHONE": phone, ">DATE_CREATE": get_yesterday()}, select=["ID"], order="DESC")
+        leads = get_leads(filters={"PHONE": phone, ">DATE_CREATE": get_yesterday()}, select=["ID", "NAME", "UF_CRM_MAKE", "UF_CRM_MODEL", "UF_CRM_YEAR"], order="DESC")
         if leads:
             lead = leads[0]
             break
@@ -32,8 +33,8 @@ async def identify_user(message: Message) -> None:
         await message.answer(os.getenv("LEAD_NOT_FOUND_TEXT"))
         return
     lead_id = lead.get("ID")
-    redis_cli.set(lead_id, message.chat.id, ex=86400*7)
+    set_lead(Lead(**lead), message.chat.id)
     await message.answer(os.getenv("LEAD_FOUND_TEXT").format(lead_id))
     if message.from_user and message.from_user.username:
         update_lead(lead_id, {os.getenv("TELEGRAM_LINK_FIELD_ID"): f"https://t.me/{message.from_user.username}"})
-        logging.info(f"{Fore.GREEN}Updated lead {lead_id} with tg username {message.from_user.username}{Style.RESET_ALL}")    
+        logging.info(f"{Fore.GREEN}Updated lead {lead_id} with tg username {message.from_user.username}{Style.RESET_ALL}")
