@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.11
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY /e5nlp /app/e5nlp
 COPY /aulib /app/aulib
 COPY /au_sheets /app/au_sheets
 
-COPY auapp_chatbot/bot /app/bot
+COPY /auapp_chatbot/bot /app/bot
 COPY /auapp_chatbot/app.py /auapp_chatbot/_bot.py /auapp_chatbot/_redis.py /auapp_chatbot/.env /auapp_chatbot/requirements.txt /app/
 
 RUN pip install ./au_b24

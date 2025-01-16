@@ -5,16 +5,17 @@ from colorama import Fore, Style
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
-from au_b24 import get_leads, update_lead
+from au_b24 import get_leads, update_lead, add_comment
 from e5lib.time import get_yesterday
 from e5lib.funcs import phone_purge, create_phone_vars
+from e5nlp import inject_marks
 from .types import Lead
 from ._scenario import get_next_node
-from ._storage import get_stage_hash, reset_stage_hash, set_lead
+from ._storage import get_stage_hash, reset_stage_hash, set_lead, get_lead, set_stage_hash
 
 router = Router()
 
-async def _identify_user(message: Message) -> True | None:
+async def _identify_user(message: Message) -> bool | None:
     "User identification with phone"
     phone = phone_purge(message.text)
     if not phone:
@@ -45,7 +46,7 @@ async def _identify_user(message: Message) -> True | None:
         else:
             link = f"https://t.me/+{phone}"
         update_lead(lead_id, {os.getenv("TELEGRAM_LINK_FIELD_ID"): link})
-        logging.info(f"{Fore.GREEN}Updated lead {lead_id} with tg username {message.from_user.username}{Style.RESET_ALL}")
+        logging.info(f"{Fore.GREEN}Updated lead {lead_id} with tg link {link}{Style.RESET_ALL}")
         return True
 
 @router.message(CommandStart())
@@ -64,3 +65,15 @@ async def handle_message(message: Message) -> None:
     if not node:
         await message.answer(os.getenv("BEATOFF_TEXT"))
         return
+    customer_name = None
+    car_name = None
+    lead = get_lead(message.chat.id)
+    if lead:
+        customer_name = lead.customer_name
+        car_name = lead.car_name
+    text = inject_marks(text=node.text, customer_name=customer_name, car_name=car_name)
+    await message.answer(text)
+    set_stage_hash(message.chat.id, node.stage_hash)
+    logging.info(f"{Fore.LIGHTYELLOW_EX}Send text: {text}{Style.RESET_ALL}")
+    if lead:
+        add_comment(entity_id=lead.id, entity_type="lead", text="Бот: \n" + text + "\n\nКлиент: \n" + message.text )

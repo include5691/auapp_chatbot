@@ -9,7 +9,7 @@ from au_b24 import get_lead, get_user
 from e5lib.funcs import phone_purge
 from aulib.au_engine import get_engines
 from _bot import bot
-from ._storage import get_chat_id
+from ._storage import get_chat_id, set_stage_hash
 
 fastapi_app = FastAPI()
 
@@ -39,7 +39,9 @@ async def process_distributed_lead(request: Request):
         return
     wa_link = os.getenv("WA_API_URL").format(phone=phone_purge(engines[0].wid), text=quote(os.getenv("WA_FIRST_MESSAGE_TEXT")))
     try:
-        await bot.send_message(chat_id.decode(), os.getenv("LEAD_DIST_TEXT").format(user.get("NAME"), wa_link))
+        await bot.send_message(chat_id, os.getenv("LEAD_DIST_TEXT").format(user.get("NAME"), wa_link))
         logging.info(f"{Fore.LIGHTGREEN_EX}Sent dist text to {lead_id}{Style.RESET_ALL}")
     except TelegramForbiddenError as e:
         logging.error(f"{Fore.RED}TelegramForbiddenError: {e}{Style.RESET_ALL}")
+    set_stage_hash(chat_id, "-1")
+    return
