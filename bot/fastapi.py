@@ -2,7 +2,7 @@ import logging
 import os
 import logging
 from urllib.parse import quote
-from bot.fastapi import FastAPI, Request
+from fastapi import FastAPI, Request
 from colorama import Fore, Style
 from aiogram.exceptions import TelegramForbiddenError
 from au_b24 import get_lead, get_user

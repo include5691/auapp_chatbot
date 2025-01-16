@@ -4,14 +4,18 @@ from .types import Lead
 
 def get_stage_hash(chat_id: str) -> str | None:
     "Get stage hash for scenario"
-    value = redis_cli.get(os.getenv("SCENARIO_HASH_KEY").format(chat_id))
+    value = redis_cli.get(os.getenv("SCENARIO_HASH_KEY").format(chat_id=chat_id))
     if value:
         return value.decode()
     return None
 
-def reset_stage_hash(client_id: str) -> None:
+def set_stage_hash(chat_id: str, value: str) -> None:
+    "Set stage hash for scenario"
+    redis_cli.set(os.getenv("SCENARIO_HASH_KEY").format(chat_id=chat_id), value, ex=7*86400)
+
+def reset_stage_hash(chat_id: str) -> None:
     "Reset stage hash for scenario"
-    redis_cli.delete(os.getenv("SCENARIO_HASH_KEY").format(client_id))
+    redis_cli.delete(os.getenv("SCENARIO_HASH_KEY").format(chat_id=chat_id))
 
 def set_lead(lead: Lead, chat_id: str) -> None:
     "Set lead to storage"

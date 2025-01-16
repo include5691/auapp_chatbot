@@ -7,7 +7,7 @@ from au_b24 import get_leads, update_lead
 from e5lib.funcs import phone_purge, create_phone_vars
 from e5lib.time import get_yesterday
 from ..types import Lead
-from .._storage import set_lead
+from .._storage import set_lead, set_stage_hash
 
 async def identify_user(message: Message) -> None:
     "User identification with phone"
@@ -38,3 +38,4 @@ async def identify_user(message: Message) -> None:
     if message.from_user and message.from_user.username:
         update_lead(lead_id, {os.getenv("TELEGRAM_LINK_FIELD_ID"): f"https://t.me/{message.from_user.username}"})
         logging.info(f"{Fore.GREEN}Updated lead {lead_id} with tg username {message.from_user.username}{Style.RESET_ALL}")
+        set_stage_hash(message.chat.id, "0")

@@ -24,5 +24,5 @@ async def handle_message(message: Message) -> None:
     logging.info(message.text)
     stage_hash = get_stage_hash(message.chat.id)
     if not stage_hash:
-        identify_user(message)
+        await identify_user(message)
     
