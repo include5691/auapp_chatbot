@@ -1,2 +1,2 @@
 from .routers import router
-from .fastapi import fastapi_app
+from .leads import fastapi_app
