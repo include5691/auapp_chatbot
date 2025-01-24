@@ -7,6 +7,7 @@ from pyotp import TOTP
 from urllib.parse import quote
 from fastapi import FastAPI, Request
 from colorama import Fore, Style
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.exceptions import TelegramForbiddenError
 from au_b24 import get_lead, get_user
 from e5lib.funcs import phone_purge
@@ -60,21 +61,21 @@ async def process_distributed_lead(request: Request):
     if not user:
         return
     base_text = os.getenv("LEAD_DIST_TEXT").format(user.get("NAME"))
-    links_text = None
+    inline_keyboard = []
     engines = get_engines(user_id)
     if engines:
         wa_link = os.getenv("WA_API_URL").format(phone=phone_purge(engines[0].wid), text=quote(os.getenv("WA_FIRST_MESSAGE_TEXT")))
-        links_text = "\n\nWhatsApp:\n" + wa_link
+        inline_keyboard.append([InlineKeyboardButton(text="WhatsApp", url=wa_link)])
     telegram_link = _get_telegram_link(user_id)
     if telegram_link:
-        links_text += "\n\nTelegram:\n" + telegram_link
-    if links_text:
-        text = base_text + "\n\nНапишите нам напрямую:" + links_text
+        inline_keyboard.append([InlineKeyboardButton(text="Telegram", url=telegram_link)])
+    if inline_keyboard:
+        text = base_text + "\n\nНапишите нам напрямую:"
     else:
         text = base_text + "\n\nПожалуйста, подождите, пока с вами свяжутся"
     try:
-        await bot.send_message(chat_id, text)
-        logging.info(f"{Fore.LIGHTGREEN_EX}Sent dist text to {lead_id}{Style.RESET_ALL}")
+        await bot.send_message(chat_id, text, reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_keyboard))
+        logging.info(f"{Fore.LIGHTGREEN_EX}Sent lead dist text to {lead_id}{Style.RESET_ALL}")
     except TelegramForbiddenError as e:
         logging.error(f"{Fore.RED}TelegramForbiddenError: {e}{Style.RESET_ALL}")
     set_stage_hash(chat_id, "-1")
