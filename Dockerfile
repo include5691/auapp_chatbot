@@ -11,7 +11,8 @@ COPY /aulib /app/aulib
 COPY /au_sheets /app/au_sheets
 
 COPY /auapp_chatbot/bot /app/bot
-COPY /auapp_chatbot/app.py /auapp_chatbot/_bot.py /auapp_chatbot/_redis.py /auapp_chatbot/.env /auapp_chatbot/requirements.txt /app/
+COPY /auapp_chatbot/models /app/models
+COPY /auapp_chatbot/app.py /auapp_chatbot/_bot.py /auapp_chatbot/_redis.py /auapp_chatbot/_orm.py /auapp_chatbot/.env /auapp_chatbot/requirements.txt /app/
 
 RUN pip install ./au_b24
 RUN pip install ./e5lib

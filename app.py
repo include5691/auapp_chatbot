@@ -2,16 +2,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import logging
-import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+logging.getLogger('aiogram').setLevel(logging.WARNING)
+
 import asyncio
 import uvicorn
 from aiogram import Dispatcher
+from bot import fastapi_app, router
 from _bot import bot
-from bot import fastapi_app
-from bot import router
+from _orm import Base, engine
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-logging.getLogger('aiogram').setLevel(logging.WARNING)
+Base.metadata.create_all(engine)
 
 dp = Dispatcher()
 dp.include_router(router)

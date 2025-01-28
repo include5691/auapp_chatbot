@@ -9,6 +9,8 @@ from au_b24 import get_leads, update_lead, add_comment
 from e5lib.time import get_yesterday
 from e5lib.funcs import phone_purge, create_phone_vars
 from e5nlp import inject_marks
+from _orm import SessionMaker
+from models import TelegramMap
 from .types import Lead
 from ._scenario import get_next_node
 from ._storage import get_stage_hash, reset_stage_hash, set_lead, get_lead, set_stage_hash
@@ -41,11 +43,14 @@ async def _identify_user(message: Message) -> bool | None:
     set_lead(Lead(**lead), message.chat.id)
     await message.answer(os.getenv("LEAD_FOUND_TEXT").format(lead_id))
     if message.from_user:
+        with SessionMaker() as session:
+            session.merge(TelegramMap(id=message.from_user.id, phone=phone, username=message.from_user.username))
+            session.commit()
         if message.from_user.username:
             link = f"https://t.me/{message.from_user.username}"
         else:
             link = f"https://t.me/+{phone}"
-        update_lead(lead_id, {os.getenv("TELEGRAM_LINK_FIELD_ID"): link})
+        update_lead(lead_id, {os.getenv("TELEGRAM_LINK_FIELD_ID"): link, os.getenv("TELEGRAM_USER_ID_FIELD_ID"): message.from_user.id})
         logging.info(f"{Fore.GREEN}Updated lead {lead_id} with tg link {link}{Style.RESET_ALL}")
         return True
 
