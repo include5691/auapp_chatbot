@@ -8,10 +8,12 @@ class TelegramMessage(Base):
     timestamp = Column(Integer)
     chat_id = Column(BigInteger, nullable=False)
     message_id = Column(Integer, nullable=False)
+    telegram_user_id = Column(BigInteger)
     bitrix_user_id = Column(Integer)
 
-    def __init__(self, timestamp: int, chat_id: int, message_id: int, bitrix_user_id: int | None):
+    def __init__(self, timestamp: int, chat_id: int, message_id: int, telegram_user_id: int, bitrix_user_id: int | None):
         self.timestamp = timestamp
         self.chat_id = chat_id
         self.message_id = message_id
+        self.telegram_user_id = telegram_user_id
         self.bitrix_user_id = bitrix_user_id

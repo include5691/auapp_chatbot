@@ -6,11 +6,11 @@ class TelegramCommand(Base):
     __tablename__ = 'telegram_commands'
     
     id = Column(Integer, primary_key=True)
-    command = Column(String)
     timestamp = Column(Integer)
-    bitrix_user_id = Column(Integer)
+    command = Column(String)
+    telegram_user_id = Column(BigInteger)
 
-    def __init__(self, chat_id: int, message_id: int):
-        self.chat_id = chat_id
-        self.message_id = message_id
-        self.timestamp = time.time()
+    def __init__(self, timestamp: int, command: str, telegram_user_id: int):
+        self.command = command
+        self.timestamp = timestamp
+        self.telegram_user_id = telegram_user_id
