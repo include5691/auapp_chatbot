@@ -11,7 +11,7 @@ from e5lib.time import get_yesterday
 from e5lib.funcs import phone_purge, create_phone_vars
 from e5nlp import inject_marks
 from _orm import SessionMaker
-from models import TelegramChat, TelegramCommand, TelegramMessage
+from models import TelegramMap, TelegramCommand, TelegramMessage
 from .types import Lead
 from ._scenario import get_next_node
 from ._storage import get_stage_hash, reset_stage_hash, set_lead, get_lead, set_stage_hash
@@ -45,9 +45,9 @@ async def _identify_user(message: Message) -> bool | None:
     await message.answer(os.getenv("LEAD_FOUND_TEXT").format(lead_id))
     if message.from_user:
         with SessionMaker() as session:
-            telegram_contact = session.get(TelegramChat, message.from_user.id)
+            telegram_contact = session.get(TelegramMap, message.from_user.id)
             if not telegram_contact:
-                session.add(TelegramChat(id=message.from_user.id, phone=phone, username=message.from_user.username, timestamp=time.time(), user_id=lead.get("ASSIGNED_BY_ID")))
+                session.add(TelegramMap(id=message.from_user.id, phone=phone, username=message.from_user.username, timestamp=time.time(), user_id=lead.get("ASSIGNED_BY_ID")))
             else:
                 telegram_contact.phone = phone
                 telegram_contact.username = message.from_user.username
@@ -73,7 +73,7 @@ async def handle_message(message: Message) -> None:
     logging.info(message.text)
     with SessionMaker() as session:
         bitrix_user_id = None
-        telegram_chat = session.get(TelegramChat, message.chat.id)
+        telegram_chat = session.get(TelegramMap, message.chat.id)
         if telegram_chat:
             bitrix_user_id = telegram_chat.bitrix_user_id
         session.add(TelegramMessage(chat_id=message.chat.id, message_id=message.message_id, timestamp=message.date.timestamp(), bitrix_user_id=bitrix_user_id))

@@ -1,19 +1,17 @@
 from sqlalchemy import Column, Integer, BigInteger, String
 from _orm import Base
 
-class TelegramChat(Base):
+class TelegramMap(Base):
     "Customer map"
-    __tablename__ = 'telegram_chats'
+    __tablename__ = 'telegram_map'
 
-    id = Column(BigInteger, primary_key=True) # chat_id
+    id = Column(BigInteger, primary_key=True) # telegram user_id
     phone = Column(String(20))
     username = Column(String(128))
     timestamp = Column(Integer)
-    bitrix_user_id = Column(Integer)
 
-    def __init__(self, id: int, phone: str, username: str | None, timestamp: int, bitrix_user_id: int):
+    def __init__(self, id: int, phone: str, username: str | None, timestamp: int):
         self.id = id
         self.phone = phone
         self.username = username
         self.timestamp = timestamp
-        self.bitrix_user_id = bitrix_user_id
