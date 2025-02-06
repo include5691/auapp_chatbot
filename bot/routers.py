@@ -81,4 +81,4 @@ async def handle_message(message: Message) -> None:
     set_stage_hash(message.chat.id, node.stage_hash)
     logging.info(f"{Fore.LIGHTYELLOW_EX}Send text: {text}{Style.RESET_ALL}")
     if lead:
-        add_comment(entity_id=lead.id, entity_type="lead", text="Бот: \n" + text + "\n\nКлиент: \n" + message.text )
+        add_comment(entity_id=lead.id, entity_type="lead", text=f"Бот:\n{text}\n\nКлиент:\n{message.text}")
