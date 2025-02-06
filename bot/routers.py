@@ -1,5 +1,6 @@
-import logging
 import os
+import time
+import logging
 import logging
 from colorama import Fore, Style
 from aiogram import Router
@@ -10,7 +11,7 @@ from e5lib.time import get_yesterday
 from e5lib.funcs import phone_purge, create_phone_vars
 from e5nlp import inject_marks
 from _orm import SessionMaker
-from models import TelegramMap
+from models import TelegramChats
 from .types import Lead
 from ._scenario import get_next_node
 from ._storage import get_stage_hash, reset_stage_hash, set_lead, get_lead, set_stage_hash
@@ -31,7 +32,7 @@ async def _identify_user(message: Message) -> bool | None:
         return
     lead = None
     for phone_var in phone_vars:
-        leads = get_leads(filters={"PHONE": phone_var, ">DATE_CREATE": get_yesterday()}, select=["ID", "NAME", "UF_CRM_MAKE", "UF_CRM_MODEL", "UF_CRM_YEAR"], order="DESC")
+        leads = get_leads(filters={"PHONE": phone_var, ">DATE_CREATE": get_yesterday()}, select=["ID", "NAME", "ASSIGNED_BY_ID", "UF_CRM_MAKE", "UF_CRM_MODEL", "UF_CRM_YEAR"], order="DESC")
         if leads:
             lead = leads[0]
             break
@@ -44,7 +45,12 @@ async def _identify_user(message: Message) -> bool | None:
     await message.answer(os.getenv("LEAD_FOUND_TEXT").format(lead_id))
     if message.from_user:
         with SessionMaker() as session:
-            session.merge(TelegramMap(id=message.from_user.id, phone=phone, username=message.from_user.username))
+            telegram_contact = session.get(TelegramChats, message.from_user.id)
+            if not telegram_contact:
+                session.add(TelegramChats(id=message.from_user.id, phone=phone, username=message.from_user.username, timestamp=time.time(), user_id=lead.get("ASSIGNED_BY_ID")))
+            else:
+                telegram_contact.phone = phone
+                telegram_contact.username = message.from_user.username
             session.commit()
         if message.from_user.username:
             link = f"https://t.me/{message.from_user.username}"

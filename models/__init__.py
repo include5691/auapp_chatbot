@@ -1,1 +1,1 @@
-from .map import TelegramMap
+from .chats import TelegramChats
