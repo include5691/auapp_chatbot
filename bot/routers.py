@@ -47,7 +47,7 @@ async def _identify_user(message: Message) -> bool | None:
         with SessionMaker() as session:
             telegram_contact = session.get(TelegramMap, message.from_user.id)
             if not telegram_contact:
-                session.add(TelegramMap(id=message.from_user.id, phone=phone, username=message.from_user.username, timestamp=time.time(), bitrix_user_id=lead.get("ASSIGNED_BY_ID")))
+                session.add(TelegramMap(id=message.from_user.id, phone=phone, username=message.from_user.username, timestamp=time.time()))
             else:
                 telegram_contact.phone = phone
                 telegram_contact.username = message.from_user.username
