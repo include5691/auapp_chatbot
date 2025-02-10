@@ -8,9 +8,9 @@ class TelegramCommand(Base):
     id = Column(Integer, primary_key=True)
     timestamp = Column(Integer)
     command = Column(String)
-    telegram_user_id = Column(BigInteger)
+    contact_id = Column(BigInteger)
 
-    def __init__(self, timestamp: int, command: str, telegram_user_id: int):
+    def __init__(self, timestamp: int, command: str, contact_id: int):
         self.command = command
         self.timestamp = timestamp
-        self.telegram_user_id = telegram_user_id
+        self.contact_id = contact_id

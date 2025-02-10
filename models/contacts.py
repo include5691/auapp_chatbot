@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, BigInteger, String
 from _orm import Base
 
-class TelegramMap(Base):
+class TelegramContact(Base):
     "Customer map"
-    __tablename__ = 'telegram_map'
+    __tablename__ = 'telegram_contacts'
 
-    id = Column(BigInteger, primary_key=True) # telegram user_id
+    id = Column(BigInteger, primary_key=True) # contact id
     phone = Column(String(20))
     username = Column(String(128))
     timestamp = Column(Integer)
