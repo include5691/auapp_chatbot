@@ -1,16 +1,17 @@
-import logging
 import os
+import time
+import logging
 import logging
 from colorama import Fore, Style
 from aiogram import Router
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
 from au_b24 import get_leads, update_lead, add_comment
 from e5lib.time import get_yesterday
 from e5lib.funcs import phone_purge, create_phone_vars
 from e5nlp import inject_marks
 from _orm import SessionMaker
-from models import TelegramMap
+from models import TelegramContact, TelegramCommand, TelegramMessage
 from .types import Lead
 from ._scenario import get_next_node
 from ._storage import get_stage_hash, reset_stage_hash, set_lead, get_lead, set_stage_hash
@@ -31,7 +32,7 @@ async def _identify_user(message: Message) -> bool | None:
         return
     lead = None
     for phone_var in phone_vars:
-        leads = get_leads(filters={"PHONE": phone_var, ">DATE_CREATE": get_yesterday()}, select=["ID", "NAME", "UF_CRM_MAKE", "UF_CRM_MODEL", "UF_CRM_YEAR"], order="DESC")
+        leads = get_leads(filters={"PHONE": phone_var, ">DATE_CREATE": get_yesterday()}, select=["ID", "NAME", "ASSIGNED_BY_ID", "UF_CRM_MAKE", "UF_CRM_MODEL", "UF_CRM_YEAR"], order="DESC")
         if leads:
             lead = leads[0]
             break
@@ -44,7 +45,12 @@ async def _identify_user(message: Message) -> bool | None:
     await message.answer(os.getenv("LEAD_FOUND_TEXT").format(lead_id))
     if message.from_user:
         with SessionMaker() as session:
-            session.merge(TelegramMap(id=message.from_user.id, phone=phone, username=message.from_user.username))
+            telegram_contact = session.get(TelegramContact, message.from_user.id)
+            if not telegram_contact:
+                session.add(TelegramContact(id=message.from_user.id, phone=phone, username=message.from_user.username, timestamp=time.time()))
+            else:
+                telegram_contact.phone = phone
+                telegram_contact.username = message.from_user.username
             session.commit()
         if message.from_user.username:
             link = f"https://t.me/{message.from_user.username}"
@@ -55,13 +61,19 @@ async def _identify_user(message: Message) -> bool | None:
         return True
 
 @router.message(CommandStart())
-async def begin_handler(message: Message) -> None:
+async def begin_handler(message: Message, command: Command) -> None:
     await message.answer(os.getenv("WELCOME_TEXT"))
     reset_stage_hash(message.chat.id)
+    with SessionMaker() as session:
+        session.add(TelegramCommand(command=command.command, timestamp=message.date.timestamp(), contact_id=message.from_user.id))
+        session.commit()
 
 @router.message()
 async def handle_message(message: Message) -> None:
     logging.info(message.text)
+    with SessionMaker() as session:
+        session.add(TelegramMessage(chat_id=message.chat.id, message_id=message.message_id, timestamp=message.date.timestamp(), contact_id=message.from_user.id))
+        session.commit()
     stage_hash = get_stage_hash(message.chat.id)
     if not stage_hash:
         if not await _identify_user(message):

@@ -12,7 +12,9 @@ from aiogram.exceptions import TelegramForbiddenError
 from au_b24 import get_lead, get_user
 from e5lib.funcs import phone_purge
 from aulib.au_engine import get_engines
+from models import TelegramRedirect
 from _bot import bot
+from _orm import SessionMaker
 from ._storage import get_chat_id, set_stage_hash
 
 fastapi_app = FastAPI()
@@ -74,9 +76,11 @@ async def process_distributed_lead(request: Request):
     else:
         text = base_text + "\n\nПожалуйста, подождите, пока с вами свяжутся"
     try:
-        await bot.send_message(chat_id, text, reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_keyboard))
+        message = await bot.send_message(chat_id, text, reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_keyboard))
         logging.info(f"{Fore.LIGHTGREEN_EX}Sent lead dist text to {lead_id}{Style.RESET_ALL}")
+        with SessionMaker() as session:
+            session.add(TelegramRedirect(contact_id=message.from_user.id, bitrix_user_id=user_id))
+            session.commit()
     except TelegramForbiddenError as e:
         logging.error(f"{Fore.RED}TelegramForbiddenError: {e}{Style.RESET_ALL}")
     set_stage_hash(chat_id, "-1")
-    return
