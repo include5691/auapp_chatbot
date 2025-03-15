@@ -1,4 +1,4 @@
 # auapp_chatbot
 
-# Настройка
-Требует исходящего хука из колонки "новый лид" для ослеживания распределения лида
+# Settings
+Requires an outgoing hook from the "new lead" column to track the distribution of the lead
