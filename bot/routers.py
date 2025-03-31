@@ -6,6 +6,7 @@ from colorama import Fore, Style
 from aiogram import Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
+from aiogram.exceptions import TelegramForbiddenError
 from au_b24 import get_leads, update_lead, add_comment
 from e5lib.time import get_yesterday
 from e5lib.funcs import phone_purge, create_phone_vars
@@ -20,45 +21,48 @@ router = Router()
 
 async def _identify_user(message: Message) -> bool | None:
     "User identification with phone"
-    phone = phone_purge(message.text)
-    if not phone:
-        logging.info(f"{Fore.RED}Invalid phone number{Style.RESET_ALL}")
-        await message.answer(os.getenv("PHONE_INVALID_TEXT"))
-        return
-    phone_vars = create_phone_vars(phone, "*")
-    if not phone_vars:
-        logging.info(f"{Fore.RED}Invalid phone number{Style.RESET_ALL}")
-        await message.answer(os.getenv("PHONE_PARSE_INVALID_TEXT"))
-        return
-    lead = None
-    for phone_var in phone_vars:
-        leads = get_leads(filters={"PHONE": phone_var, ">DATE_CREATE": get_yesterday()}, select=["ID", "NAME", "ASSIGNED_BY_ID", "UF_CRM_MAKE", "UF_CRM_MODEL", "UF_CRM_YEAR"], order="DESC")
-        if leads:
-            lead = leads[0]
-            break
-    if not lead:
-        logging.info(f"{Fore.RED}Lead not found{Style.RESET_ALL}")
-        await message.answer(os.getenv("LEAD_NOT_FOUND_TEXT"))
-        return
-    lead_id = lead.get("ID")
-    set_lead(Lead(**lead), message.chat.id)
-    await message.answer(os.getenv("LEAD_FOUND_TEXT").format(lead_id))
-    if message.from_user:
-        with SessionMaker() as session:
-            telegram_contact = session.get(TelegramContact, message.from_user.id)
-            if not telegram_contact:
-                session.add(TelegramContact(id=message.from_user.id, phone=phone, username=message.from_user.username, timestamp=time.time()))
+    try:
+        phone = phone_purge(message.text)
+        if not phone:
+            logging.info(f"{Fore.RED}Invalid phone number{Style.RESET_ALL}")
+            await message.answer(os.getenv("PHONE_INVALID_TEXT"))
+            return
+        phone_vars = create_phone_vars(phone, "*")
+        if not phone_vars:
+            logging.info(f"{Fore.RED}Invalid phone number{Style.RESET_ALL}")
+            await message.answer(os.getenv("PHONE_PARSE_INVALID_TEXT"))
+            return
+        lead = None
+        for phone_var in phone_vars:
+            leads = get_leads(filters={"PHONE": phone_var, ">DATE_CREATE": get_yesterday()}, select=["ID", "NAME", "ASSIGNED_BY_ID", "UF_CRM_MAKE", "UF_CRM_MODEL", "UF_CRM_YEAR"], order="DESC")
+            if leads:
+                lead = leads[0]
+                break
+        if not lead:
+            logging.info(f"{Fore.RED}Lead not found{Style.RESET_ALL}")
+            await message.answer(os.getenv("LEAD_NOT_FOUND_TEXT"))
+            return
+        lead_id = lead.get("ID")
+        set_lead(Lead(**lead), message.chat.id)
+        await message.answer(os.getenv("LEAD_FOUND_TEXT").format(lead_id))
+        if message.from_user:
+            with SessionMaker() as session:
+                telegram_contact = session.get(TelegramContact, message.from_user.id)
+                if not telegram_contact:
+                    session.add(TelegramContact(id=message.from_user.id, phone=phone, username=message.from_user.username, timestamp=time.time()))
+                else:
+                    telegram_contact.phone = phone
+                    telegram_contact.username = message.from_user.username
+                session.commit()
+            if message.from_user.username:
+                link = f"https://t.me/{message.from_user.username}"
             else:
-                telegram_contact.phone = phone
-                telegram_contact.username = message.from_user.username
-            session.commit()
-        if message.from_user.username:
-            link = f"https://t.me/{message.from_user.username}"
-        else:
-            link = f"https://t.me/+{phone}"
-        update_lead(lead_id, {os.getenv("TELEGRAM_LINK_FIELD_ID"): link, os.getenv("TELEGRAM_USER_ID_FIELD_ID"): message.from_user.id})
-        logging.info(f"{Fore.GREEN}Updated lead {lead_id} with tg link {link}{Style.RESET_ALL}")
-        return True
+                link = f"https://t.me/+{phone}"
+            update_lead(lead_id, {os.getenv("TELEGRAM_LINK_FIELD_ID"): link, os.getenv("TELEGRAM_USER_ID_FIELD_ID"): message.from_user.id})
+            logging.info(f"{Fore.GREEN}Updated lead {lead_id} with tg link {link}{Style.RESET_ALL}")
+            return True
+    except TelegramForbiddenError as e:
+        logging.error(f"{Fore.RED}TelegramForbiddenError: {e}{Style.RESET_ALL}")
 
 @router.message(CommandStart())
 async def begin_handler(message: Message, command: Command) -> None:
